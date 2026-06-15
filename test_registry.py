@@ -11,21 +11,21 @@ async def main():
     registry = MCPRegistry()
     await registry.initialize_all()
 
-    print("\n✅ Loaded plugins:", registry.list_names())
+    print("\n   Loaded plugins:", registry.list_names())
 
     dummy = registry.get("dummy")
 
     ping = await dummy.call_tool("ping", {})
-    print("✅ ping:", ping)
+    print("   ping:", ping)
 
     echo = await dummy.call_tool("echo", {"message": "hello contract"})
-    print("✅ echo:", echo)
+    print("   echo:", echo)
 
     health = await registry.health_check()
-    print("✅ health:", health)
+    print("   health:", health)
 
     await registry.shutdown_all()
-    print("✅ shutdown complete")
+    print("   shutdown complete")
 
 
 asyncio.run(main())
