@@ -17,4 +17,4 @@ credentials.json
 .coverage
 htmlcov/
 .pytest_cache/
-chroma_db/
+chroma_db/temp_backup/ 
