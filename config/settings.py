@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     ENABLE_EMBEDDING_PERSONALIZATION: bool = False
     ENABLE_PUSH_NOTIFICATIONS: bool = False
     ENABLE_WEEKLY_RETROSPECTIVE: bool = False
+    LOCAL_TIMEZONE: str = "Asia/Kolkata"
 
     class Config:
         env_file = ".env"
