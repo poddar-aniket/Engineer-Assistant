@@ -5,11 +5,11 @@ plugins:
 
   - name: calendar
     path: mcp_server/calendar_server
-    enabled: false
+    enabled: true
 
   - name: gmail
     path: mcp_server/gmail_server
-    enabled: false
+    enabled: true
 
   - name: slack
     path: mcp_server/slack_server

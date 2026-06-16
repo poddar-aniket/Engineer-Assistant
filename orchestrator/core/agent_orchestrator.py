@@ -72,7 +72,7 @@ class AgentOrchestrator:
         }
 
     def get_pending_actions(self) -> list[dict[str, Any]]:
-        actions = self._repo.get_pending()
+        actions = self._repo.list_pending()
         return [self._action_to_dict(a) for a in actions]
 
     # ------------------------------------------------------------------
