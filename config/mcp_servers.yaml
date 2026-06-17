@@ -1,0 +1,20 @@
+plugins:
+  - name: github
+    path: mcp_server/github_server
+    enabled: true
+
+  - name: calendar
+    path: mcp_server/calendar_server
+    enabled: true
+
+  - name: gmail
+    path: mcp_server/gmail_server
+    enabled: true
+
+  - name: slack
+    path: mcp_server/slack_server
+    enabled: false
+
+  - name: dummy
+    path: mcp_server/dummy_server
+    enabled: false
