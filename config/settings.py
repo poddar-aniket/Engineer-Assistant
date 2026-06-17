@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     APP_PORT: int = 8000
     BRIEFING_HOUR: int = 8
     BRIEFING_MINUTE: int = 0
+    CI_POLL_INTERVAL_MINUTES: int = 15
 
     # Database
     DATABASE_URL: str = "sqlite:///./engineer_copilot.db"

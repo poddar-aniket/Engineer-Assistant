@@ -35,22 +35,36 @@ class CorrectionRequest(BaseModel):
 
 
 # ------------------------------------------------------------------
-# Dependency: builds AgentOrchestrator per-request using the
-# shared MCPRegistry + per-request DB session
+# Shared orchestrator construction — single source of truth so the
+# per-request dependency and the scheduler never drift out of sync.
 # ------------------------------------------------------------------
 
-def get_orchestrator(db: Session = Depends(get_db)) -> AgentOrchestrator:
+def _build_orchestrator(db: Session) -> AgentOrchestrator:
     from orchestrator.api.main import registry, gemini_client
-    action_repo = ActionRepository(db)
-    correction_repo = CorrectionRepository(db)
     return AgentOrchestrator(
         github=registry.get("github"),
         calendar=registry.get("calendar"),
         gmail=registry.get("gmail"),
         gemini_client=gemini_client,
-        action_repository=action_repo,
-        correction_repository=correction_repo,
+        action_repository=ActionRepository(db),
+        correction_repository=CorrectionRepository(db),
     )
+
+
+def get_orchestrator(db: Session = Depends(get_db)) -> AgentOrchestrator:
+    """Per-request dependency — uses FastAPI's get_db() so the session
+    is opened and closed within the request lifecycle."""
+    return _build_orchestrator(db)
+
+
+def build_orchestrator_with_session() -> tuple[AgentOrchestrator, Session]:
+    """Used by the scheduler. Opens a fresh session per job run instead
+    of holding one open for the lifetime of the process — caller is
+    responsible for closing the returned session when the job finishes."""
+    from orchestrator.repository.database import SessionLocal
+    db = SessionLocal()
+    orch = _build_orchestrator(db)
+    return orch, db
 
 
 # ------------------------------------------------------------------
@@ -100,6 +114,8 @@ def reject_action(
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
+
+
 @router.post("/corrections")
 def store_correction(
     body: CorrectionRequest,
