@@ -1,9 +1,10 @@
+from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from typing import Any
 
 from orchestrator.core.gemini_client import GeminiClient
-from __future__ import annotations
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------

@@ -116,7 +116,7 @@ async def test_reject_action() -> None:
 
 async def test_get_pending_actions() -> None:
     orch = _make_orchestrator()
-    orch._repo.get_pending = MagicMock(return_value=[_make_mock_action(), _make_mock_action(action_id=2)])
+    orch._repo.list_pending = MagicMock(return_value=[_make_mock_action(), _make_mock_action(action_id=2)])
 
     result = orch.get_pending_actions()
     assert len(result) == 2
