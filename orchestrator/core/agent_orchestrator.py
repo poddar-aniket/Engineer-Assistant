@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from mcp_server.base.base_server import ToolResult
 from mcp_server.calendar_server.server import CalendarMCPServer
 from mcp_server.github_server.server import GitHubMCPServer
 from mcp_server.gmail_server.server import GmailMCPServer
@@ -37,6 +38,7 @@ class AgentOrchestrator:
             else None
         )
         self._correction_repo = correction_repository
+        self._github = github
         self._briefing_generator = BriefingGenerator(github, calendar, gmail, gemini_client)
         self._action_drafter = ActionDrafter(
             command_handler=CommandHandler(gemini_client, personalization_engine),
@@ -52,6 +54,9 @@ class AgentOrchestrator:
     # ------------------------------------------------------------------
     # Public API (called by FastAPI routes)
     # ------------------------------------------------------------------
+
+    async def check_ci_failures(self) -> ToolResult:
+        return await self._github.call_tool("get_ci_failures", {})
 
     async def get_briefing(self) -> dict[str, Any]:
         briefing = await self._briefing_generator.generate()
