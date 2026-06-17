@@ -1,0 +1,72 @@
+work_domains:
+  - github.com
+  - gitlab.com
+  - jira.atlassian.com
+  - atlassian.com
+  - slack.com
+  - notion.so
+  - linear.app
+  - figma.com
+  - vercel.com
+  - aws.amazon.com
+  - google.com
+  - microsoft.com
+  - zoom.us
+  - loom.com
+  - confluence.atlassian.com
+  - circleci.com
+  - datadog.com
+
+personal_domains:
+  - gmail.com
+  - yahoo.com
+  - hotmail.com
+  - outlook.com
+  - icloud.com
+  - protonmail.com
+  - me.com
+
+work_subject_keywords:
+  - pr
+  - pull request
+  - review
+  - ci
+  - build failed
+  - deployment
+  - incident
+  - alert
+  - pipeline
+  - sprint
+  - standup
+  - release
+  - jira
+  - ticket
+  - issue
+  - merge
+  - commit
+  - production
+  - staging
+  - invoice
+  - contract
+  - proposal
+  - meeting
+  - agenda
+  - onboarding
+
+noise_subject_keywords:
+  - unsubscribe
+  - newsletter
+  - offer
+  - deal
+  - sale
+  - discount
+  - promo
+  - coupon
+  - "% off"
+  - limited time
+  - click here
+  - verify your email
+  - confirm your
+  - no-reply
+  - noreply
+  - donotreply

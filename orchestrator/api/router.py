@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from orchestrator.core.agent_orchestrator import AgentOrchestrator
 from orchestrator.repository.action_repository import ActionRepository
+from orchestrator.repository.correction_repository import CorrectionRepository
 from orchestrator.repository.database import get_db
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,12 @@ class CommandRequest(BaseModel):
 class RejectRequest(BaseModel):
     reason: str = ""
 
+class CorrectionRequest(BaseModel):
+    action_type: str
+    original: str
+    corrected: str
+    user_note: str = ""
+
 
 # ------------------------------------------------------------------
 # Dependency: builds AgentOrchestrator per-request using the
@@ -35,12 +42,14 @@ class RejectRequest(BaseModel):
 def get_orchestrator(db: Session = Depends(get_db)) -> AgentOrchestrator:
     from orchestrator.api.main import registry, gemini_client
     action_repo = ActionRepository(db)
+    correction_repo = CorrectionRepository(db)
     return AgentOrchestrator(
         github=registry.get("github"),
         calendar=registry.get("calendar"),
         gmail=registry.get("gmail"),
         gemini_client=gemini_client,
         action_repository=action_repo,
+        correction_repository=correction_repo,
     )
 
 
@@ -88,6 +97,20 @@ def reject_action(
     orch: AgentOrchestrator = Depends(get_orchestrator),
 ):
     result = orch.reject_action(action_id)
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+@router.post("/corrections")
+def store_correction(
+    body: CorrectionRequest,
+    orch: AgentOrchestrator = Depends(get_orchestrator),
+):
+    result = orch.store_correction(
+        action_type=body.action_type,
+        original=body.original,
+        corrected=body.corrected,
+        user_note=body.user_note or None,
+    )
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result

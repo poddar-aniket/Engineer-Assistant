@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from orchestrator.core.gemini_client import GeminiClient
-
+from __future__ import annotations
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -154,8 +154,13 @@ class CommandHandler:
         result  = await handler.handle("Schedule a 1:1 with Sarah tomorrow at 3pm")
     """
 
-    def __init__(self, gemini_client: GeminiClient) -> None:
+    def __init__(
+        self,
+        gemini_client: GeminiClient,
+        personalization_engine=None,
+    ) -> None:
         self._gemini = gemini_client
+        self._personalization = personalization_engine
 
     # ------------------------------------------------------------------
     # Public
@@ -175,7 +180,21 @@ class CommandHandler:
 
         try:
             prompt = self._build_prompt(user_command)
+            if self._personalization:
+                action_hint = "general"
+                prompt = self._personalization.build_personalized_prompt(
+                    base_prompt=prompt,
+                    action_type=action_hint,
+                )
             fc = self._gemini.function_call(prompt, COMMAND_TOOLS)
+            action_type = fc.get("name", "general")
+            if self._personalization and action_type not in ("unknown_command", "general"):
+                refined_prompt = self._personalization.build_personalized_prompt(
+                    base_prompt=prompt,
+                    action_type=action_type,
+                )
+                if refined_prompt != prompt:
+                    fc = self._gemini.function_call(refined_prompt, COMMAND_TOOLS)
             draft = self._build_draft_action(fc, user_command)
             return CommandResult(
                 success=True,
