@@ -13,7 +13,10 @@ from orchestrator.core.command_handler import CommandHandler
 from orchestrator.core.gemini_client import GeminiClient
 from orchestrator.drafting.action_drafter import ActionDrafter
 from orchestrator.repository.action_repository import ActionRepository
+from orchestrator.repository.correction_repository import CorrectionRepository
 from orchestrator.repository.models import Action
+from orchestrator.personalization.engine import PersonalizationEngine
+from orchestrator.personalization.strategies import RecencyStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +29,17 @@ class AgentOrchestrator:
         gmail: GmailMCPServer,
         gemini_client: GeminiClient,
         action_repository: ActionRepository,
+        correction_repository: CorrectionRepository | None = None,
     ) -> None:
+        personalization_engine = (
+            PersonalizationEngine(RecencyStrategy(correction_repository))
+            if correction_repository
+            else None
+        )
+        self._correction_repo = correction_repository
         self._briefing_generator = BriefingGenerator(github, calendar, gmail, gemini_client)
         self._action_drafter = ActionDrafter(
-            command_handler=CommandHandler(gemini_client),
+            command_handler=CommandHandler(gemini_client, personalization_engine),
             action_repository=action_repository,
         )
         self._approval_manager = ApprovalManager(
@@ -70,6 +80,23 @@ class AgentOrchestrator:
             "action": self._action_to_dict(result.action) if result.action else None,
             "error": result.error,
         }
+
+    def store_correction(
+        self,
+        action_type: str,
+        original: str,
+        corrected: str,
+        user_note: str | None = None,
+    ) -> dict[str, Any]:
+        if not self._correction_repo:
+            return {"success": False, "error": "Correction repository not configured"}
+        correction = self._correction_repo.create(
+            action_type=action_type,
+            original=original,
+            corrected=corrected,
+            user_note=user_note,
+        )
+        return {"success": True, "correction_id": correction.id}
 
     def get_pending_actions(self) -> list[dict[str, Any]]:
         actions = self._repo.list_pending()
