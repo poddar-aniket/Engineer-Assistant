@@ -61,3 +61,10 @@ class CorrectionRepository:
             .all()
         )
         return typed + global_rest
+    def list_all(self, limit: int = 50) -> list[Correction]:
+        return (
+            self.db.query(Correction)
+            .order_by(Correction.created_at.desc())
+            .limit(limit)
+            .all()
+        )
