@@ -78,7 +78,7 @@ async def test_schedule_meeting_exact_timezone_math():
 
     check("schedule_meeting result is success", result.success is True)
     check("schedule_meeting action ends up executed", result.action.status == ActionStatus.EXECUTED.value)
-    tool_name, params = calendar.calls[0]
+    tool_name, params = calendar.calls[-1]
     check("schedule_meeting calls create_event", tool_name == "create_event")
     check("15:00 IST converts to 09:30 UTC", params["start_time"] == "2026-06-18T09:30:00+00:00")
     check("end time converts correctly too", params["end_time"] == "2026-06-18T10:00:00+00:00")
@@ -100,7 +100,7 @@ async def test_add_calendar_event_maps_notes_to_description():
 
     result = await manager.approve_and_execute(action.id)
 
-    tool_name, params = calendar.calls[0]
+    tool_name, params = calendar.calls[-1]
     check("add_calendar_event result is success", result.success is True)
     check("add_calendar_event calls create_event", tool_name == "create_event")
     check("'notes' maps to 'description'", params["description"] == "Bring x-rays")

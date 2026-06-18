@@ -20,6 +20,7 @@ logging.basicConfig(
     format="%(asctime)s  %(levelname)-8s  %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+logging.getLogger("mcp_server.calendar_server.server").setLevel(logging.DEBUG)
 
 registry = MCPRegistry()
 gemini_client = GeminiClient()

@@ -2,7 +2,9 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from typing import Any
-
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from config.settings import settings
 from orchestrator.core.gemini_client import GeminiClient
 
 logger = logging.getLogger(__name__)
@@ -154,6 +156,7 @@ class CommandHandler:
         handler = CommandHandler(gemini_client)
         result  = await handler.handle("Schedule a 1:1 with Sarah tomorrow at 3pm")
     """
+    READ_ONLY_ACTIONS = {"summarise_emails", "get_todays_schedule", "check_availability"}
 
     def __init__(
         self,
@@ -216,15 +219,24 @@ class CommandHandler:
 
     @staticmethod
     def _build_prompt(user_command: str) -> str:
+        today_str = datetime.now(ZoneInfo(settings.LOCAL_TIMEZONE)).strftime("%Y-%m-%d")
         return f"""You are an AI assistant for a software engineer.
-The user has typed the following command:
+    The user has typed the following command:
 
-"{user_command}"
+    "{user_command}"
 
-Choose the most appropriate function to call based on what the user wants to do.
-Fill in all required parameters. Infer reasonable values from context where possible.
-Today's context: use ISO date format (YYYY-MM-DD) for dates, 24-hour HH:MM for times.
-If the command does not match any supported action, call unknown_command."""
+    Choose the most appropriate function to call based on what the user wants to do.
+    Fill in all required parameters. Infer reasonable values from context where possible.
+    Today's date is {today_str}. Use this as the reference point when the user says
+    "today", "tomorrow", "next Monday", or any other relative date expression.
+    Use ISO date format (YYYY-MM-DD) for dates, 24-hour HH:MM for times.
+    When converting times with AM/PM, follow these examples exactly:
+    "4 AM" -> "04:00", "9 AM" -> "09:00", "12 PM" -> "12:00",
+    "5 PM" -> "17:00", "11 PM" -> "23:00", "12 AM" -> "00:00".
+    IMPORTANT: For schedule_meeting and add_calendar_event, you MUST provide both
+    "start_time" and "end_time" as separate HH:MM fields. Never use "time" or
+    "duration_minutes" as substitutes.
+    If the command does not match any supported action, call unknown_command."""
 
     def _build_draft_action(
         self, fc: dict[str, Any], raw_command: str
@@ -233,12 +245,17 @@ If the command does not match any supported action, call unknown_command."""
         args = fc.get("args", {})
 
         display = self._format_display(name, args, raw_command)
+        logger.info("action_type=%s requires_approval check: READ_ONLY_ACTIONS=%s", name, self.READ_ONLY_ACTIONS)
+        requires_approval = (
+            name != "unknown_command"
+            and name not in self.READ_ONLY_ACTIONS
+        )
 
         return DraftAction(
             action_type=name,
             params=args,
             display=display,
-            requires_approval=name != "unknown_command",
+            requires_approval=requires_approval,
         )
 
     @staticmethod

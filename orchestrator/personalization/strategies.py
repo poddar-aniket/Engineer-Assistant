@@ -12,7 +12,7 @@ class RecencyStrategy(BasePersonalizationStrategy):
         self.correction_repository = correction_repository
 
     def get_context(self, action_type: str, limit: int = 5) -> str:
-        corrections = self.correction_repository.get_recent_mixed(
+        corrections = self.correction_repository.get_recent_by_type(
             action_type=action_type, limit=limit
         )
         if not corrections:

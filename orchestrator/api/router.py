@@ -83,6 +83,7 @@ async def handle_command(
     orch: AgentOrchestrator = Depends(get_orchestrator),
 ):
     result = await orch.handle_command(body.user_input)
+    logger.info("Command result: %s", result)
     if not result["success"]:
         raise HTTPException(status_code=422, detail=result["error"])
     return result
@@ -130,3 +131,7 @@ def store_correction(
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
+
+@router.get("/corrections")
+def get_corrections(orch: AgentOrchestrator = Depends(get_orchestrator)):
+    return orch.get_corrections()

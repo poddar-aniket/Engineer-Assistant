@@ -8,21 +8,24 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from mcp_server.base.base_server import BaseMCPServer, ToolDefinition, ToolResult
 from oauth_helper import get_google_credentials
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
 class CalendarMCPServer(BaseMCPServer):
 
-    def __init__(self, name: str = "calendar"):
+    def __init__(self, name: str = "calendar", local_timezone: str | None = None):
         super().__init__(name=name)
         self._service = None
+        self._tz = ZoneInfo(local_timezone or settings.LOCAL_TIMEZONE)
 
     # ------------------------------------------------------------------ #
     #  Lifecycle                                                           #
@@ -137,9 +140,18 @@ class CalendarMCPServer(BaseMCPServer):
     # ------------------------------------------------------------------ #
 
     def _get_today_events(self) -> list[dict]:
-        now = datetime.now(timezone.utc)
-        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Anchor to the user's local date, not UTC, so "today" means
+        # the correct calendar day (e.g. IST midnight, not UTC midnight).
+        local_now = datetime.now(self._tz)
+        start_of_day = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_day = start_of_day + timedelta(days=1)
+
+        logger.debug(
+            "_get_today_events: tz=%s  timeMin=%s  timeMax=%s",
+            self._tz,
+            start_of_day.isoformat(),
+            end_of_day.isoformat(),
+        )
 
         result = (
             self._service.events()
@@ -155,7 +167,8 @@ class CalendarMCPServer(BaseMCPServer):
         return self._parse_events(result.get("items", []))
 
     def _get_upcoming_events(self, days: int = 7) -> list[dict]:
-        now = datetime.now(timezone.utc)
+        # Use local-timezone "now" so the window aligns with the user's clock.
+        now = datetime.now(self._tz)
         end = now + timedelta(days=days)
 
         result = (
@@ -188,9 +201,29 @@ class CalendarMCPServer(BaseMCPServer):
             .execute()
         )
         busy_slots = result.get("calendars", {}).get("primary", {}).get("busy", [])
+        is_free = len(busy_slots) == 0
+
+        # freeBusy only gives time ranges, not event details. When busy,
+        # fetch the actual event(s) in that window so we can show what's conflicting.
+        conflicting_events = []
+        if not is_free:
+            events_result = (
+                self._service.events()
+                .list(
+                    calendarId="primary",
+                    timeMin=start_dt.isoformat(),
+                    timeMax=end_dt.isoformat(),
+                    singleEvents=True,
+                    orderBy="startTime",
+                )
+                .execute()
+            )
+            conflicting_events = self._parse_events(events_result.get("items", []))
+
         return {
-            "is_free": len(busy_slots) == 0,
+            "is_free": is_free,
             "busy_slots": busy_slots,
+            "conflicting_events": conflicting_events,
             "checked_from": start_time,
             "checked_to": end_time,
         }

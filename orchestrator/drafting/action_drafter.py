@@ -53,10 +53,15 @@ class ActionDrafter:
         if draft is None:
             return DraftResult(success=False, error="CommandHandler returned no draft action.")
 
-        if not draft.requires_approval:
-            # e.g. unknown_command -- nothing actionable to persist
+        if draft.action_type == "unknown_command":
             return DraftResult(success=False, draft_action=draft, error=draft.display)
 
+        if not draft.requires_approval:
+            # Read-only action — execute directly via MCP, do NOT persist to DB.
+            # Returning action=None signals AgentOrchestrator.handle_command to
+            # call _execute_read_only() instead of queuing an approval card.
+            logger.info("ActionDrafter: read-only action '%s' — skipping DB persist", draft.action_type)
+            return DraftResult(success=True, action=None, draft_action=draft)
         try:
             action = self._persist(draft, source="command")
         except Exception as exc:

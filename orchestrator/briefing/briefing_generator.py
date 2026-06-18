@@ -112,16 +112,25 @@ class BriefingGenerator:
 
         pr_result = await self._github.call_tool("get_actionable_prs", {})
         if pr_result.success:
-            data["prs"] = pr_result.data
+            if isinstance(pr_result.data, dict):
+                data["prs"] = pr_result.data.get("prs", [])
+            else:
+                data["prs"] = pr_result.data or []
         else:
             errors.append(f"GitHub PRs: {pr_result.error}")
 
         ci_result = await self._github.call_tool("get_ci_failures", {})
         if ci_result.success:
-            data["ci_failures"] = ci_result.data
+            failures_list = []
+            if isinstance(ci_result.data, dict):
+                failures_list = ci_result.data.get("failures", [])
+            elif isinstance(ci_result.data, list):
+                failures_list = ci_result.data
+
+            data["ci_failures"] = failures_list
             # Correlate each failure with commits
             correlated = []
-            for failure in (ci_result.data or []):
+            for failure in failures_list:
                 run_id = failure.get("id") or failure.get("run_id")
                 if run_id:
                     corr = await self._github.call_tool(
@@ -165,7 +174,7 @@ class BriefingGenerator:
         data: dict[str, Any] = {}
 
         email_result = await self._gmail.call_tool(
-            "list_emails", {"max_results": 20, "label": "INBOX"}
+            "list_emails", {"max_results": 20}
         )
         if email_result.success:
             emails = email_result.data or {}
