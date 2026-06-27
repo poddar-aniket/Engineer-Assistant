@@ -32,6 +32,10 @@ _scheduler = None  # module-level handle, set during lifespan startup
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _scheduler
+    from orchestrator.repository.models import Base
+    from orchestrator.repository.database import engine
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables ensured.")
 
     logger.info("Starting up — initializing MCP plugins...")
     await registry.initialize_all()
