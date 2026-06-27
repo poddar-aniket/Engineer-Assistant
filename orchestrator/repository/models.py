@@ -42,15 +42,15 @@ class Action(Base):
     def __repr__(self) -> str:
         return f"Action(id={self.id}, type={self.action_type!r}, status={self.status!r})"
 
-class Correction(Base):
-    __tablename__ = "corrections"
+# class Correction(Base):
+#     __tablename__ = "corrections"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    action_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    original: Mapped[str] = mapped_column(Text, nullable=False)
-    corrected: Mapped[str] = mapped_column(Text, nullable=False)
-    user_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+#     action_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+#     original: Mapped[str] = mapped_column(Text, nullable=False)
+#     corrected: Mapped[str] = mapped_column(Text, nullable=False)
+#     user_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+#     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
-    def __repr__(self) -> str:
-        return f"Correction(id={self.id}, type={self.action_type!r})"
+#     def __repr__(self) -> str:
+#         return f"Correction(id={self.id}, type={self.action_type!r})"
