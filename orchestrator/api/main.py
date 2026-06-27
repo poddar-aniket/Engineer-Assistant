@@ -33,6 +33,7 @@ _scheduler = None  # module-level handle, set during lifespan startup
 async def lifespan(app: FastAPI):
     global _scheduler
     from orchestrator.repository.models import Base
+    from orchestrator.repository.correction_models import Correction  # registers corrections table
     from orchestrator.repository.database import engine
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables ensured.")
