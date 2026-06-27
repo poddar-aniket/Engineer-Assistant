@@ -14,7 +14,7 @@ DEFAULT_TIMEOUT = 30
 BRIEFING_TIMEOUT = 180
 
 st.set_page_config(
-    page_title="Engineer's Daily Co-pilot",
+    page_title="DevMitra",
     page_icon=None,
     layout="wide",
 )
@@ -203,7 +203,7 @@ if "correction_submitted" not in st.session_state:
 # Sidebar
 # ---------------------------------------------------------------------------
 
-st.sidebar.title("Engineer's Daily Co-pilot")
+st.sidebar.title("DevMitra")
 page = st.sidebar.radio(
     "Navigate",
     ["Briefing", "Command", "Pending Actions", "Corrections"],
