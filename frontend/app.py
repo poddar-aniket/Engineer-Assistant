@@ -4,7 +4,7 @@ import streamlit as st
 import requests
 from datetime import datetime as _dt
 
-API_BASE = "http://localhost:8000/api/v1"
+API_BASE = "https://engineer-assistant.onrender.com"
 
 # The briefing endpoint fans out to GitHub, Calendar, and Gmail before it
 # ever reaches Gemini, so it legitimately needs more headroom than a single
